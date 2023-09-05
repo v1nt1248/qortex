@@ -3,6 +3,8 @@
   import { Dialog, useDialogPluginComponent } from 'quasar'
   import { useAppStore } from '@/store/app.store'
   import NewSingerDialog from './NewSingerDialog.vue'
+  import NewAlbumDialog from './NewAlbumDialog.vue'
+  import NewSongDialog from './NewSongDialog.vue'
   import { getRandomId, entitiesSortFn } from '@/tools/helpers'
 
   // @ts-ignore
@@ -46,7 +48,7 @@
       selectedSong.value = undefined
     }
 
-    formDisable.value = !(selectedSinger.value.id && selectedAlbum.value && selectedSong.value.id)
+    formDisable.value = !(selectedSinger.value.id && selectedAlbum.value && selectedAlbum.value.id && selectedSong.value && selectedSong.value.id)
   }
 
   const addNewSinger = () => {
@@ -65,10 +67,41 @@
 
   const addNewAlbum = () => {
     console.log('addNewAlbum!')
+    Dialog.create({
+      component: NewAlbumDialog,
+    }).onOk((value: { name: string, year: number }) => {
+      const newAlbum = {
+        id: getRandomId(5),
+        singerId: selectedSinger.value.id,
+        name: value.name,
+        year: value.year,
+        songs: [],
+      }
+      appStore.addAlbum(newAlbum)
+      nextTick(() => {
+        selectedAlbum.value = newAlbum
+      })
+    }).onCancel(() => {
+      selectedSinger.value = undefined
+    })
   }
 
   const addNewSong = () => {
     console.log('addNewSong!')
+    Dialog.create({
+      component: NewSongDialog,
+    }).onOk((name: string) => {
+      const newSong = {
+        id: getRandomId(5),
+        name: name,
+      }
+      appStore.addSong(newSong)
+      nextTick(() => {
+        selectedSong.value = newSong
+      })
+    }).onCancel(() => {
+      selectedSong.value = undefined
+    })
   }
 
   const onConfirmClick = () => {
@@ -169,7 +202,7 @@
           :rules="[val => !!val || 'Не может быть пустым!']"
           option-label="name"
           :options="songs"
-          :disable="!selectedSinger"
+          :disable="!selectedSinger || !selectedAlbum"
           @update:model-value="onUpdate"
         />
         <q-btn
@@ -179,10 +212,10 @@
           outline
           icon="add"
           color="primary"
-          :disable="!selectedSinger"
+          :disable="!selectedSinger || !selectedAlbum"
           @click="addNewSong"
         >
-          <q-tooltip v-if="selectedSinger" class="bg-indigo-9 text-center" max-width="120px" anchor="top middle" self="bottom middle">
+          <q-tooltip v-if="selectedSinger && selectedAlbum" class="bg-indigo-9 text-center" max-width="120px" anchor="top middle" self="bottom middle">
             Добавить новую песню
           </q-tooltip>
         </q-btn>
@@ -199,12 +232,8 @@
       /> -->
 
       <p>{{ selectedSinger }}</p>
-      <p>{{ singers }}</p>
-
       <p>{{ selectedAlbum }}</p>
-      <p>{{ albums }}</p>
-
-      <p>{{ songs }}</p>
+      <p>{{ selectedSong }}</p>
 
       <q-separator />
 

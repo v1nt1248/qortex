@@ -8,10 +8,10 @@
   })
   const { dialogRef, onDialogHide, onDialogOK, onDialogCancel } = useDialogPluginComponent()
 
-  const singer = ref('')
+  const name = ref('')
 
   const onConfirmClick = () => {
-    onDialogOK(singer.value)
+    onDialogOK(name.value)
   }
 </script>
 
@@ -20,11 +20,11 @@
     ref="dialogRef"
     persistent
     @hide="onDialogHide"
-    class="new-singer-dialog"
+    class="new-song-dialog"
   >
     <q-card style="max-height: 50vh; width: 500px;">
       <q-card-section>
-        <div class="text-h6">Новый исполнитель</div>
+        <div class="text-h6">Новая песня</div>
       </q-card-section>
 
       <q-separator />
@@ -32,10 +32,10 @@
       <q-card-section>
         <q-input
           class="q-mb-lg"
-          v-model="singer"
-          label="Имя исполнителя*"
+          v-model="name"
+          label="Название песни*"
           stack-label
-          placeholder="Введите имя исполнителя"
+          placeholder="Введите название песни"
         />
       </q-card-section>
 
@@ -54,7 +54,7 @@
           size="sm"
           color="primary"
           label="Добавить"
-          :disable="!singer.length"
+          :disable="!name.length"
           @click="onConfirmClick"
         />
       </q-card-actions>
