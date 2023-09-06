@@ -2,6 +2,7 @@
   import { computed, nextTick, onMounted, ref } from 'vue'
   import { Dialog, useDialogPluginComponent } from 'quasar'
   import { useAppStore } from '@/store/app.store'
+  import DialogActions from './DialogActions.vue'
   import NewSingerDialog from './NewSingerDialog.vue'
   import NewAlbumDialog from './NewAlbumDialog.vue'
   import NewSongDialog from './NewSongDialog.vue'
@@ -16,39 +17,69 @@
   const appStore = useAppStore()
 
   const formDisable = ref(true)
-  const songName = ref('')
-  const selectedSong = ref()
+
   const selectedSinger = ref()
   const selectedAlbum = ref()
+  const selectedSong = ref()
+  
+  const searchSingerText = ref('')
+  const searchAlbumText = ref('')
+  const searchSongText = ref('')
 
-  const singers = computed(() => Object.values(appStore.singers).sort((a, b) => entitiesSortFn(a, b)))
+
+  const singers = computed(() => Object.values(appStore.singers)
+    .filter(s => s.name.toLowerCase().includes(searchSingerText.value.toLowerCase()))
+    .sort((a, b) => entitiesSortFn(a, b)))
   const albums = computed(() => {
     if (!selectedSinger.value || !selectedSinger.value.id) {
       return []
     }
     return Object.values(appStore.albums)
-      .filter(album => album.singerId === selectedSinger.value.id)
+      .filter(album => album.singerId === selectedSinger.value.id && album.name.toLowerCase().includes(searchAlbumText.value.toLowerCase()))
       .sort((a, b) => entitiesSortFn(a, b, 'year'))
   })
-  const songs = computed(() => {
-    const songsIds: string[] = albums.value
-      .reduce((res, album) => {
-        const { songs } = album
-        res = [...res, ...songs]
-        return res
-      }, [] as string[])
-      const uniqueSongsIds = Array.from(new Set(songsIds))
-      return uniqueSongsIds.map(id => appStore.songs[id]).sort((a, b) => entitiesSortFn(a, b))
+  // const songs = computed(() => {
+  //   const songsIds: string[] = albums.value
+  //     .reduce((res, album) => {
+  //       const { songs } = album
+  //       res = [...res, ...songs]
+  //       return res
+  //     }, [] as string[])
+  //   const uniqueSongsIds = Array.from(new Set(songsIds.concat(appStore.allUndistributedSongs)))
+  //   return uniqueSongsIds.map(id => appStore.songs[id]).sort((a, b) => entitiesSortFn(a, b))
+  // })
+  const songs = computed(() => Object.values(appStore.songs)
+    .filter(s => s.name.toLowerCase().includes(searchSongText.value.toLowerCase()))
+    .sort((a, b) => entitiesSortFn(a, b)))
+
+  onMounted(() => {
+    // @ts-ignore
+    const { params = {} } = appStore.currentRoute
+    const { singerId, albumId } = params
+    if (singerId) {
+      selectedSinger.value = singers.value.find(s => s.id === singerId)
+    }
+    if (albumId) {
+      selectedAlbum.value = albums.value.find(a => a.id === albumId)
+    }
   })
 
+  const isSongSelectItemDisabled = (id: string): boolean => {
+    const { songs = [] } = selectedAlbum.value || {}
+    return songs.includes(id)
+  }
+
   const onUpdate = (field?: string) => {
-    console.log('onUpdate!')
     if (field === 'singer') {
       selectedAlbum.value = undefined
       selectedSong.value = undefined
     }
 
-    formDisable.value = !(selectedSinger.value.id && selectedAlbum.value && selectedAlbum.value.id && selectedSong.value && selectedSong.value.id)
+    if (field === 'album') {
+      selectedSong.value = undefined
+    }
+
+    formDisable.value = !(selectedAlbum.value && selectedSinger.value.id && selectedAlbum.value && selectedAlbum.value.id && selectedSong.value && selectedSong.value.id)
   }
 
   const addNewSinger = () => {
@@ -59,14 +90,16 @@
       appStore.addSinger(newSinger)
       nextTick(() => {
         selectedSinger.value = newSinger
+        selectedAlbum.value = undefined
+        selectedSong.value =undefined
+        onUpdate()
       })
     }).onCancel(() => {
-      selectedSinger.value = undefined
+      onUpdate()
     })
   }
 
   const addNewAlbum = () => {
-    console.log('addNewAlbum!')
     Dialog.create({
       component: NewAlbumDialog,
     }).onOk((value: { name: string, year: number }) => {
@@ -80,14 +113,15 @@
       appStore.addAlbum(newAlbum)
       nextTick(() => {
         selectedAlbum.value = newAlbum
+        selectedSong.value = undefined
+        onUpdate()
       })
     }).onCancel(() => {
-      selectedSinger.value = undefined
+      onUpdate()
     })
   }
 
   const addNewSong = () => {
-    console.log('addNewSong!')
     Dialog.create({
       component: NewSongDialog,
     }).onOk((name: string) => {
@@ -98,29 +132,26 @@
       appStore.addSong(newSong)
       nextTick(() => {
         selectedSong.value = newSong
+        onUpdate()
       })
     }).onCancel(() => {
-      selectedSong.value = undefined
+      onUpdate()
     })
   }
 
-  const onConfirmClick = () => {
-    // TODO
-    onDialogOK()
+  const filterSingers = (val: string, update: Function) => {
+    update(() => searchSingerText.value = val)
+  }
+  const filterAlbums = (val: string, update: Function) => {
+    update(() => searchAlbumText.value = val)
+  }
+  const filterSongs = (val: string, update: Function) => {
+    update(() => searchSongText.value = val)
   }
 
-  onMounted(() => {
-    // @ts-ignore
-    const { params = {} } = appStore.currentRoute
-    const { singerId, albumId } = params
-    console.log('onBeforeMount! ', singerId, albumId)
-    if (singerId) {
-      selectedSinger.value = singers.value.find(s => s.id === singerId)
-    }
-    if (albumId) {
-      selectedAlbum.value = albums.value.find(a => a.id === albumId)
-    }
-  })
+  const onConfirmClick = () => {
+    onDialogOK({ song: selectedSong.value, albumId: selectedAlbum.value.id })
+  }
 </script>
 
 <template>
@@ -146,6 +177,8 @@
           :rules="[val => !!val || 'Не может быть пустым!']"
           option-label="name"
           :options="singers"
+          use-input
+          @filter="filterSingers"
           @update:model-value="onUpdate('singer')"
         />
         <q-btn
@@ -174,7 +207,9 @@
           option-label="name"
           :options="albums"
           :disable="!selectedSinger"
-          @update:model-value="onUpdate"
+          use-input
+          @filter="filterAlbums"
+          @update:model-value="onUpdate('album')"
         />
         <q-btn
           style="position: absolute; right: 8px; top: 40px;"
@@ -200,11 +235,21 @@
           hint="Выберите песню"
           :reactive-rules="true"
           :rules="[val => !!val || 'Не может быть пустым!']"
-          option-label="name"
           :options="songs"
+          option-label="name"
           :disable="!selectedSinger || !selectedAlbum"
+          use-input
+          @filter="filterSongs"
           @update:model-value="onUpdate"
-        />
+        >
+          <template #option="scope">
+            <q-item v-bind="scope.itemProps" :class="{ 'song-select-item--disabled': isSongSelectItemDisabled(scope.opt.id) }">
+              <q-item-section>
+                {{ scope.opt.name }}
+              </q-item-section>
+            </q-item>
+          </template>
+        </q-select>
         <q-btn
           style="position: absolute; right: 8px; top: 40px;"
           size="sm"
@@ -220,46 +265,25 @@
           </q-tooltip>
         </q-btn>
       </q-card-section>
-
-      <!-- <q-input
-        v-model="songName"
-        label="Название песни*"
-        stack-label
-        placeholder="Введите название песни"
-        :reactive-rules="true"
-        :rules="[val => !!val || 'Не может быть пустым!']"
-        @update:model-value="onUpdate"
-      /> -->
-
-      <p>{{ selectedSinger }}</p>
-      <p>{{ selectedAlbum }}</p>
+      
       <p>{{ selectedSong }}</p>
 
       <q-separator />
 
-      <q-card-actions align="right">
-        <q-btn
-          flat
-          size="sm"
-          color="primary"
-          label="Отменить"
-          @click="onDialogCancel"
-        />
-
-        <q-btn
-          size="sm"
-          color="primary"
-          label="Добавить"
-          :disable="formDisable"
-          @click="onConfirmClick"
-        />
-      </q-card-actions>
+      <dialog-actions
+        :disabled="formDisable"
+        @cancel="onDialogCancel"
+        @confirm="onConfirmClick"
+      />
     </q-card>
   </q-dialog>
 </template>
 
 <style lang="scss" scoped>
-  .add-song-dialog {
-    // TODO
+  .song-select-item {
+    &--disabled {
+      opacity: 0.4;
+      pointer-events: none;
+    }
   }
 </style>

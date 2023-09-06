@@ -1,9 +1,11 @@
 <script lang="ts" setup>
   import { computed, watch } from 'vue'
+  import { useRouter } from 'vue-router'
   import { Dialog } from 'quasar'
   import { useAppStore } from '@/store/app.store'
   import AddSongDilog from '@/components/AddSongDialog.vue'
 
+  const router = useRouter()
   const appStore = useAppStore()
 
   const breadcrumbs = computed(() => appStore.breadcrumbs)
@@ -18,10 +20,12 @@
   }
 
   const addSong = () => {
-    console.log('ADD SONG')
-
     Dialog.create({
       component: AddSongDilog,
+    }).onOk(({ song, albumId }: { song: Song, albumId: string }) => {
+      const { songs } = appStore.albums[albumId]
+      songs.push(song.id)
+      appStore.updateAlbum({ id: albumId, field: 'songs', value: songs })
     })
   }
 
@@ -32,7 +36,32 @@
         // @ts-ignore
         const { params = {} } = appStore.currentRoute
         const { singerId, albumId } = params
-        if (!singerId && !albumId) {
+
+        if (oldValue === '/' || oldValue === '') {
+          const newBreadcrumbs = [{
+            name: 'Начальная страница',
+            path: '/',
+          }]
+          if (singerId && appStore.singers[singerId]) {
+            newBreadcrumbs.push({
+              name: appStore.singers[singerId].name,
+              path: `/singers/${singerId}`
+            })
+          }
+          if (albumId && appStore.albums[albumId]) {
+            newBreadcrumbs.push({
+              name: appStore.albums[albumId].name,
+              path: `/singers/${singerId}/${albumId}`
+            })
+          }
+
+          appStore.setBreadcrumbs(newBreadcrumbs)
+          if (
+            (singerId && !appStore.singers[singerId])
+            || (albumId && !appStore.albums[albumId])
+          ) {
+            router.push('/')
+          }
           return
         }
 

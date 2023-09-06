@@ -12,13 +12,16 @@
 
     <q-list class="singers__list">
       <q-item
-        v-for="singer in singers"
+        v-for="(singer, index) in singers"
         :key="singer.id"
         clickable
         v-ripple
         :to="`/singers/${singer.id}`"
         exact
-        class="singers__item"
+        :class="[
+          'singers__item',
+          { 'singers__item--odd': !(index % 2) },
+        ]"
       >
         <q-item-section>{{  singer.name }}</q-item-section>
       </q-item>
@@ -46,6 +49,10 @@
 
     &__item {
       font-weight: 500;
+
+      &--odd {
+        background-color: rgba(0, 0, 0, 0.05);
+      }
     }
   }
 </style>

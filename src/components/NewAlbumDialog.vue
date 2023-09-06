@@ -1,6 +1,7 @@
 <script lang="ts" setup>
   import { ref } from 'vue'
   import { useDialogPluginComponent } from 'quasar'
+  import DialogActions from './DialogActions.vue'
 
   // @ts-ignore
   const emits = defineEmits({
@@ -53,23 +54,11 @@
 
       <q-separator />
 
-      <q-card-actions align="right">
-        <q-btn
-          flat
-          size="sm"
-          color="primary"
-          label="Отменить"
-          @click="onDialogCancel"
-        />
-
-        <q-btn
-          size="sm"
-          color="primary"
-          label="Добавить"
-          :disable="!(album.name.length && album.year)"
-          @click="onConfirmClick"
-        />
-      </q-card-actions>
+      <dialog-actions
+        :disabled="!(album.name.length && album.year)"
+        @cancel="onDialogCancel"
+        @confirm="onConfirmClick"
+      />
     </q-card>
   </q-dialog>
 </template>

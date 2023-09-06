@@ -1,18 +1,26 @@
-# Vue 3 + TypeScript + Vite
+# Vue 3 + TypeScript (тестовое задание)
 
-This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+### Описание тестового задания
 
-## Recommended IDE Setup
+Соберите с помощью любой библиотеки компонентов (желательно Quasar) три странички: список исполнителей, альбомов и песен внутри альбома и форму добавления песни в альбом (бэкенд писать не нужно, достаточно просто хранить данные в памяти браузера):
 
-- [VS Code](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur) + [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.vscode-typescript-vue-plugin).
+Структура данных:
 
-## Type Support For `.vue` Imports in TS
+- Исполнитель
+  - Название
+- Альбом
+  - Исполнитель
+  - Год выпуска
+- Песня
+  - Название
+  - Порядковый номер в альбоме
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.vscode-typescript-vue-plugin) to make the TypeScript language service aware of `.vue` types.
+Одна и та же песня может быть включена в несколько альбомов, но под разными порядковыми номерами.
 
-If the standalone TypeScript plugin doesn't feel fast enough to you, Volar has also implemented a [Take Over Mode](https://github.com/johnsoncodehk/volar/discussions/471#discussioncomment-1361669) that is more performant. You can enable it by the following steps:
+### Выполнение
 
-1. Disable the built-in TypeScript Extension
-   1. Run `Extensions: Show Built-in Extensions` from VSCode's command palette
-   2. Find `TypeScript and JavaScript Language Features`, right click and select `Disable (Workspace)`
-2. Reload the VSCode window by running `Developer: Reload Window` from the command palette.
+Задача выполнялась с использование Vue + Typescript, Pinia, Quasar.
+После "подтягивания" зависимостей, проект запускается с помощью команды `yarn dev` или `npm run dev`
+Далее на `http://localhost:5173/` можно будет посмотреть результат.
+Можно добавлять новых исполнителей, альбомы у исполнителей и песни. При этом в форме добавления песни будут предзаполнены поля "Исполнитель" (если открыть форму на странице, отображающей альбомы исполнителя) или "Исполнитель" и "Альбом" (если открыть форму на странице, отображающей список песен в альбоме).  
+При добавлении песни в альбом она всегда добавляется последней в список. Порядок перен с альбоме можно менять перетаскиванием.

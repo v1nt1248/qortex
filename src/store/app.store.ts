@@ -35,6 +35,21 @@ export const useAppStore = defineStore(
             return res
           }, {} as Record<string, Album>)
       },
+      allUndistributedSongs(state): string[] {
+        const songsIds = Object.values(state.albums).reduce((res, album) => {
+          const { songs } = album
+          res = [...res, ...songs]
+          return res
+        }, [] as string[])
+        const distributedSongs = Array.from(new Set(songsIds))
+        const allSongsIds = Object.keys(state.songs)
+        return allSongsIds.reduce((res, id) => {
+          if (!distributedSongs.includes(id)) {
+            res.push(id)
+          }
+          return res
+        }, [] as string[])
+      }
     },
 
     actions: {
@@ -42,11 +57,9 @@ export const useAppStore = defineStore(
         this.breadcrumbs = value
       },
       addSinger(singer: Singer) {
-        console.log('addSinger: ', singer)
         this.singers[singer.id] = singer
       },
       addAlbum(album: Album) {
-        console.log('addAlbum: ', album)
         this.albums[album.id] = album
       },
       updateAlbum<T extends keyof Album>({ id, field, value }: { id: string, field: T, value: Album[T] }) {
@@ -55,7 +68,6 @@ export const useAppStore = defineStore(
         }
       },
       addSong(song: Song) {
-        console.log('addSong: ', song)
         this.songs[song.id] = song
       },
     },
